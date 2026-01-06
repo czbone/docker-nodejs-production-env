@@ -1,0 +1,5 @@
+.vagrant
+.vscode
+
+ssh_keys/
+hostlist
