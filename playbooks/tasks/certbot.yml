@@ -1,0 +1,51 @@
+- name: Create build directory
+  file:
+    path: '{{ docker_host_config_root }}/containers/certbot/build'
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Copy files for build
+  copy: src='./containers/certbot/files/certbot.sh' dest='{{ docker_host_config_root }}/containers/certbot/build/certbot.sh' owner=root group=root mode=0644
+
+- name: Create Dockerfile
+  template:
+    src: './containers/certbot/templates/Dockerfile.j2'
+    dest: '{{ docker_host_config_root }}/containers/certbot/build/Dockerfile'
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Build Certbot image and push
+  docker_image:
+    name: local/certbot
+    build:
+      path: '{{ docker_host_config_root }}/containers/certbot/build'
+    source: build
+    force_source: yes
+
+- name: Create Certbot container
+  docker_container:
+    name: certbot
+    image: local/certbot
+    recreate: yes
+    state: started
+    networks:
+      - name: local-network
+    log_driver: journald
+    log_options:
+      tag: "{{ '{{' }}.ImageName{{ '}}' }}/{{ '{{' }}.Name{{ '}}' }}/{{ '{{' }}.ID{{ '}}' }}"
+    volumes:
+      - '{{ docker_host_config_root }}/log/letsencrypt:/var/log/letsencrypt' # log directroy
+      - '{{ docker_host_config_root }}/letsencrypt/conf:/etc/letsencrypt'
+      - '{{ docker_host_config_root }}/letsencrypt/www:/var/www/letsencrypt'
+      - '{{ docker_host_config_root }}/nginx/conf:/etc/nginx' # restart Nginx by updating nginx.conf
+
+- name: Creates weekly Certbot renew cronjob
+  cron:
+    name: certbot weekly renewal
+    weekday: "sun"
+    hour: 5
+    minute: 20
+    job: "docker container start certbot"

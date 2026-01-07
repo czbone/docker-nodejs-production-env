@@ -1,0 +1,113 @@
+---
+# Copy config files
+- name: Create Nginx conf directory
+  file: path='{{ docker_host_config_root }}/nginx/conf/conf.d' state=directory owner=root group=root mode=0755
+- name: Create multi domain site directory
+  file: path='{{ docker_host_config_root }}/nginx/conf/sites-available' state=directory owner=root group=root mode=0755
+- name: Create SSL directory
+  file: path='{{ docker_host_config_root }}/nginx/conf/ssl' state=directory owner=root group=root mode=0755
+- name: Create bin directory
+  file: path='{{ docker_host_config_root }}/nginx/bin' state=directory owner=root group=root mode=0755
+- name: Copy nginx.conf
+  copy: src='./containers/nginx/files/nginx.conf' dest='{{ docker_host_config_root }}/nginx/conf/nginx.conf' owner=root group=root mode=0644
+- copy: src='./containers/nginx/files/mime.types' dest='{{ docker_host_config_root }}/nginx/conf/mime.types' owner=root group=root mode=0644
+- name: Create default site configuration
+  template: src='./containers/nginx/templates/default.conf.j2' dest='{{ docker_host_config_root }}/nginx/conf/conf.d/default.conf' owner=root group=root mode=0644
+- name: Create www document root directory
+  file: path='{{ www_document_root }}' state=directory owner=root group=root mode=0755
+- name: Create maintenance page
+  template: src='./containers/nginx/templates/maintenance.html.j2' dest='{{ www_document_root }}/maintenance.html' owner=root group=root mode=0644
+- name: Configure Nginx log rotation
+  template: src='./containers/nginx/templates/logrotate_nginx.j2' dest='/etc/logrotate.d/docker-nginx' owner=root group=root mode=0644
+# Nginx restarter
+- name: Copy nginx-watcher
+  template: src='./containers/nginx/templates/nginx-watcher.sh.j2' dest='{{ docker_host_config_root }}/nginx/bin/nginx-watcher.sh' owner=root group=root mode=0755
+- name: Copy nginx-watcher service
+  template: src='./containers/nginx/templates/nginx-watcher.service.j2' dest='/etc/systemd/system/nginx-watcher.service' owner=root group=root mode=0644
+# Let's Encrypt directory
+- name: Create Let's Encrypt conf directory
+  file: path='{{ docker_host_config_root }}/letsencrypt/conf/live/{{ default_domain_name }}' state=directory owner=root group=root mode=0755
+- name: Create Let's Encrypt www directory
+  file: path='{{ docker_host_config_root }}/letsencrypt/www' state=directory owner=root group=root mode=0755
+
+# Generate SSL param file
+- name: Check SSL param file
+  stat:
+    path: '{{ docker_host_config_root }}/nginx/conf/ssl/dhparam.pem'
+  register: ssl_param_file
+- name: Generate SSL param file
+  shell:
+    cmd: |
+      openssl dhparam -dsaparam -out dhparam.pem 4096
+    chdir: '{{ docker_host_config_root }}/nginx/conf/ssl'
+  when: not ssl_param_file.stat.exists
+
+# Generate SSL key and CRT file
+- name: Check SSL file
+  stat:
+    path: '{{ docker_host_config_root }}/letsencrypt/conf/live/{{ default_domain_name }}/privkey.pem'
+  register: ssl_file
+- name: Generate SSL key and CRT file
+  shell:
+    cmd: |
+      openssl req -x509 -newkey rsa:4096 -sha256 -days 365 -nodes \
+      -keyout "privkey.pem" \
+      -out "fullchain.pem" \
+      -subj "/CN={{ default_domain_name }}" \
+      -addext "subjectAltName=DNS:{{ default_domain_name }}" \
+      -addext "extendedKeyUsage=serverAuth"
+    chdir: '{{ docker_host_config_root }}/letsencrypt/conf/live/{{ default_domain_name }}'
+  when: not ssl_file.stat.exists
+
+- name: Create build directory
+  file:
+    path: '{{ docker_host_config_root }}/containers/nginx/build'
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Create Dockerfile
+  template:
+    src: './containers/nginx/templates/Dockerfile.j2'
+    dest: '{{ docker_host_config_root }}/containers/nginx/build/Dockerfile'
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Build Nginx image and push
+  docker_image:
+    name: local/nginx
+    build:
+      path: '{{ docker_host_config_root }}/containers/nginx/build'
+    source: build
+    force_source: yes
+
+- name: Create Nginx container
+  docker_container:
+    name: nginx
+    image: local/nginx
+    recreate: yes
+    state: started
+    restart_policy: always
+    ports:
+      - 80:80
+      - 443:443
+    networks:
+      - name: local-network
+    log_driver: journald
+    log_options:
+      tag: "{{ '{{' }}.ImageName{{ '}}' }}/{{ '{{' }}.Name{{ '}}' }}/{{ '{{' }}.ID{{ '}}' }}"
+    volumes:
+      - '{{ www_document_root }}:/var/www/html:ro'   # www directory
+      - '{{ docker_host_config_root }}/log/nginx:/var/log/nginx' # log directroy
+      - '{{ docker_host_config_root }}/nginx/conf:/etc/nginx'
+      - '{{ docker_host_config_root }}/app/public/uploads:{{ docker_host_config_root }}/app/public/uploads:ro' # uploads directory
+      - '{{ docker_host_config_root }}/letsencrypt/conf:/etc/letsencrypt'  # Certbot shared with
+      - '{{ docker_host_config_root }}/letsencrypt/www:/var/www/letsencrypt' # Certbot shared with
+
+- name: Start Nginx watcher(reload Nginx)
+  service:
+    name: nginx-watcher.service
+    state: started
+    enabled: true

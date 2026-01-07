@@ -1,0 +1,13 @@
+{{ docker_host_config_root }}/log/nginx/*.log {
+        daily
+        rotate 52
+        missingok
+        compress
+        delaycompress
+        notifempty
+        create 640 root root
+        sharedscripts
+        postrotate
+                docker kill --signal="USR1" nginx
+        endscript
+}

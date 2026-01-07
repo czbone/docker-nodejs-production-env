@@ -1,0 +1,15 @@
+[Unit]
+Description=nginx-watcher
+After=network.target
+
+[Service]
+Type=simple
+Restart=always
+StandardOutput=journal
+StandardError=journal
+#Restart=on-success
+#ExecStart=/usr/local/bin/nginx-watcher.sh
+ExecStart={{ docker_host_config_root }}/nginx/bin/nginx-watcher.sh
+
+[Install]
+WantedBy=multi-user.target

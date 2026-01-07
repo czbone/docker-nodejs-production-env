@@ -1,0 +1,20 @@
+#!/bin/bash
+#
+# Script Name: nginx-watcher.sh
+#
+# Version:      1.0.0
+# Author:       Naoki Hirata
+# Date:         2023-5-29
+# Description:  Nginx Restarter when nginx.conf is modified. It is launched as system service.
+# Version History:
+#               1.0.0  (2023-5-29) initial version
+# License:      MIT License
+
+WATCH_FILE={{ docker_host_config_root }}/nginx/conf/nginx.conf
+
+echo "Watch ${WATCH_FILE} for file changes..."
+
+inotifywait --quiet --monitor --event modify,attrib --timefmt "%F %T" --format "%T %e" ${WATCH_FILE} | while read; do
+  echo "Watcher: ${WATCH_FILE} changed, reloading (nginx -s reload) ..."
+  docker container exec nginx nginx -s reload
+done

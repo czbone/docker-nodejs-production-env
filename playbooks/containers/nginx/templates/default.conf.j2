@@ -1,0 +1,90 @@
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+
+    server_name {{ default_domain_name }};
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/letsencrypt;
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl default_server;
+    listen [::]:443 ssl default_server;
+
+    #server_name _;
+    server_name {{ default_domain_name }};
+    root /var/www/html;
+
+    #
+    # SSL configuration
+    #
+    ssl_certificate /etc/letsencrypt/live/{{ default_domain_name }}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/{{ default_domain_name }}/privkey.pem;
+
+    # redirect server error pages to the static page /50x.html
+    #
+    error_page   500  /50x.html;
+    location = /50x.html {
+        root   /usr/share/nginx/html;
+    }
+
+    #
+    # Maintenance page when nodejs is not available
+    #
+    error_page 502 503 504 /maintenance.html;
+    location = /maintenance.html {
+        root /var/www/html;
+        internal;
+    }
+
+    #
+    # Direct access to uploaded files
+    #
+    location /uploads/ {
+        alias {{ docker_host_config_root }}/app/public/uploads/;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        access_log off;
+
+        # セキュリティ: 実行可能ファイルの実行を禁止
+        location ~* \.(php|jsp|asp|aspx|cgi|pl|py|rb|sh|bat|exe)$ {
+            deny all;
+        }
+
+        # 画像、動画、文書ファイルのみ許可
+        location ~* \.(jpg|jpeg|png|gif|bmp|svg|webp|mp4|webm|avi|mov|pdf|doc|docx|txt|zip|rar)$ {
+            try_files $uri =404;
+        }
+
+        # その他のファイルは拒否
+        location ~* .* {
+            deny all;
+        }
+    }
+
+    #
+    # Reverse proxy to Nodejs application
+    #
+    location / {
+        proxy_pass http://nodejs:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+
+        # プロキシ接続時のタイムアウト設定
+        proxy_connect_timeout 5s;
+        proxy_send_timeout 10s;
+        proxy_read_timeout 10s;
+    }
+}

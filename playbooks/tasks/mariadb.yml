@@ -1,0 +1,81 @@
+#
+# MariaDB設定ファイル作成
+#
+- name: Create MariaDB data directory
+  file: path='{{ docker_host_config_root }}/mariadb/data' state=directory owner=root group=root mode=0755
+
+- name: Install server config file
+  template:
+    src: './containers/mariadb/templates/server.cnf.j2'
+    dest: '{{ docker_host_config_root }}/mariadb/server.cnf'
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Install client config file
+  template:
+    src: './containers/mariadb/templates/client.cnf.j2'
+    dest: '{{ docker_host_config_root }}/mariadb/client.cnf'
+    owner: root
+    group: root
+    mode: '0644'
+
+#
+# MariaDBコンテナ作成
+#
+- name: Create build directory
+  file:
+    path: '{{ docker_host_config_root }}/containers/mariadb/build'
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Create Dockerfile
+  template:
+    src: './containers/mariadb/templates/Dockerfile.j2'
+    dest: '{{ docker_host_config_root }}/containers/mariadb/build/Dockerfile'
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Copy custom entrypoint script
+  copy:
+    src: './containers/mariadb/files/docker-entrypoint-custom.sh'
+    dest: '{{ docker_host_config_root }}/containers/mariadb/build/docker-entrypoint-custom.sh'
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Build MariaDB image and push
+  docker_image:
+    name: local/mariadb
+    build:
+      path: '{{ docker_host_config_root }}/containers/mariadb/build'
+    source: build
+    force_source: yes
+
+- name: Create MariaDB container
+  docker_container:
+    name: mariadb
+    image: local/mariadb
+    recreate: yes
+    state: started
+    restart_policy: always
+    #restart_policy: on-failure
+    #restart_retries: 3
+    networks:
+      - name: local-network
+    env:
+      MARIADB_ROOT_PASSWORD: '{{ db_root_password }}'
+      MARIADB_DATABASE: '{{ main_db_name }}'
+      MARIADB_USER: '{{ main_db_user }}'
+      MARIADB_PASSWORD: '{{ main_db_password }}'
+      MARIADB_ROOT_HOST: '%'
+    log_driver: journald
+    log_options:
+      tag: "{{ '{{' }}.ImageName{{ '}}' }}/{{ '{{' }}.Name{{ '}}' }}/{{ '{{' }}.ID{{ '}}' }}"
+    volumes:
+      - '{{ docker_host_config_root }}/mariadb/data:/var/lib/mysql'
+      - '{{ docker_host_config_root }}/mariadb/client.cnf:/etc/mysql/conf.d/client.cnf:ro'
+      - '{{ docker_host_config_root }}/mariadb/server.cnf:/etc/mysql/conf.d/server.cnf:ro'

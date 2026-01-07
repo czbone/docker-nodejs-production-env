@@ -1,0 +1,42 @@
+#
+# Docker container name
+#
+docker_container_node: nodejs
+docker_container_db: mariadb
+docker_container_redis: redis
+docker_container_nginx: nginx
+docker_container_certbot: certbot
+
+#
+# Docker container configuration
+#
+docker_container_timezone: Asia/Tokyo
+docker_container_app_path: /app
+docker_container_node_version: 24
+
+#
+# Docker host configuration
+#
+docker_host_config_root: /docker
+
+#
+# Docker application configuration
+#
+www_document_root: '{{ docker_host_config_root }}/public_html' # WWWドキュメントルート
+
+#
+# DB configuration
+#
+db_root_password: root_password
+main_db_name: sample-db
+main_db_user: sample_user
+main_db_password: sample_password
+
+#
+# Application repository configuration
+#
+app_repo_owner: "czbone"
+#app_repo_name: "next16-mariadb-sample"
+app_repo_name: "astro-nodejs-mariadb-starter"
+app_repo_url: "https://github.com/{{ app_repo_owner }}/{{ app_repo_name }}"
+app_repo_api_url: "https://api.github.com/repos/{{ app_repo_owner }}/{{ app_repo_name }}"

@@ -1,0 +1,18 @@
+FROM certbot/certbot:latest
+
+RUN apk add --no-cache bash
+
+# Set time zone
+RUN apk --no-cache add tzdata && \
+    cp "/usr/share/zoneinfo/{{ docker_container_timezone }}" /etc/localtime && \
+    apk del tzdata
+
+ENV DOMAINS='{{ default_domain_name }}' \
+    CERTBOT_EMAILS='{{ certbot_email }}' \
+    CERTBOT_TEST_CERT='{{ certbot_test_cert }}' \
+    CERTBOT_RSA_KEY_SIZE=4096
+
+# Copy Certbot launch script
+COPY certbot.sh /opt/
+RUN chmod +x /opt/certbot.sh
+ENTRYPOINT ["/opt/certbot.sh"]

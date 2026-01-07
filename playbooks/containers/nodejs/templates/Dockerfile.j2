@@ -1,0 +1,20 @@
+FROM node:{{ docker_container_node_version }}-alpine
+
+# Install bash
+RUN apk update && apk upgrade && \
+    apk add --no-cache bash
+
+# Install pnpm
+RUN npm install -g pnpm
+
+# Set time zone
+RUN apk --no-cache add tzdata && \
+    cp "/usr/share/zoneinfo/{{ docker_container_timezone }}" /etc/localtime && \
+    apk del tzdata
+
+# Copy initialization script
+COPY init.sh /init.sh
+RUN chmod +x /init.sh
+
+# Set the entry point
+ENTRYPOINT ["/init.sh"]

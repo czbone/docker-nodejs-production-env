@@ -1,0 +1,6 @@
+FROM redis:latest
+
+# Set time zone
+RUN echo "{{ docker_container_timezone }}" > /etc/timezone && \
+    rm -f /etc/localtime && \
+    dpkg-reconfigure -f noninteractive tzdata

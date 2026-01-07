@@ -1,0 +1,53 @@
+---
+- name: Create Nodejs application .env file.
+  template: src='./containers/nodejs/templates/app_env.j2' dest='{{ docker_host_config_root }}/app/.env' owner=root group=root mode=0640
+
+- name: Create build directory
+  file:
+    path: '{{ docker_host_config_root }}/containers/nodejs/build'
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Copy initialization script
+  copy:
+    src: './containers/nodejs/files/init.sh'
+    dest: '{{ docker_host_config_root }}/containers/nodejs/build/init.sh'
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Create Dockerfile
+  template:
+    src: './containers/nodejs/templates/Dockerfile.j2'
+    dest: '{{ docker_host_config_root }}/containers/nodejs/build/Dockerfile'
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Build Nodejs image and push
+  docker_image:
+    name: local/nodejs
+    build:
+      path: '{{ docker_host_config_root }}/containers/nodejs/build'
+    source: build
+    force_source: yes
+
+- name: Create Nodejs container
+  docker_container:
+    name: nodejs
+    image: local/nodejs
+    recreate: yes
+    state: started
+    restart_policy: always
+    #restart_policy: on-failure
+    #restart_retries: 3
+    working_dir: /app
+    networks:
+      - name: local-network
+    log_driver: journald
+    log_options:
+      tag: "{{ '{{' }}.ImageName{{ '}}' }}/{{ '{{' }}.Name{{ '}}' }}/{{ '{{' }}.ID{{ '}}' }}"
+    volumes:
+      - '{{ docker_host_config_root }}/app:/app'  # Nodejs application

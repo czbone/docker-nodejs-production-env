@@ -1,0 +1,13 @@
+FROM mariadb:latest
+
+# Set time zone
+RUN echo "{{ docker_container_timezone }}" > /etc/timezone && \
+    rm -f /etc/localtime && \
+    dpkg-reconfigure -f noninteractive tzdata
+
+# 元のエントリーポイントをバックアップ
+RUN cp /usr/local/bin/docker-entrypoint.sh /usr/local/bin/docker-entrypoint-original.sh
+
+# カスタムエントリーポイントスクリプトを追加
+COPY docker-entrypoint-custom.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh

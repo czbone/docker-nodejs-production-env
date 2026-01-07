@@ -1,0 +1,39 @@
+---
+- name: Create build directory
+  file:
+    path: '{{ docker_host_config_root }}/containers/redis/build'
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Create Dockerfile
+  template:
+    src: './containers/redis/templates/Dockerfile.j2'
+    dest: '{{ docker_host_config_root }}/containers/redis/build/Dockerfile'
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Build Redis image and push
+  docker_image:
+    name: local/redis
+    build:
+      path: '{{ docker_host_config_root }}/containers/redis/build'
+    source: build
+    force_source: yes
+
+- name: Create Redis container
+  docker_container:
+    name: redis
+    image: local/redis
+    recreate: yes
+    state: started
+    restart_policy: always
+    networks:
+      - name: local-network
+    log_driver: journald
+    log_options:
+      tag: "{{ '{{' }}.ImageName{{ '}}' }}/{{ '{{' }}.Name{{ '}}' }}/{{ '{{' }}.ID{{ '}}' }}"
+    volumes:
+      - redis-data:/data

@@ -1,0 +1,135 @@
+---
+#
+# Astro アプリケーションのソースを配置
+#
+- name: Create app directory
+  file:
+    path: '{{ docker_host_config_root }}/app'
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+
+- name: Get tags from GitHub for application
+  uri:
+    url: "{{ app_repo_api_url }}/tags"
+    method: GET
+    return_content: yes
+  register: tags_response
+  failed_when: false
+
+- name: Set tag name if tags exist
+  set_fact:
+    tag_name: "{{ tags_response.json[0].name }}"
+  when: tags_response.status == 200 and tags_response.json | length > 0
+
+- name: Get main branch if no tags
+  uri:
+    url: "{{ app_repo_api_url }}/branches/main"
+    method: GET
+    return_content: yes
+  register: main_branch_response
+  failed_when: false
+  when: tags_response.status != 200 or tags_response.json | length == 0
+
+- name: Remove existing app directory
+  file:
+    path: '{{ docker_host_config_root }}/app'
+    state: absent
+
+- name: Create app directory
+  file:
+    path: '{{ docker_host_config_root }}/app'
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+
+- name: Download from tag if available
+  get_url:
+    url: "{{ app_repo_url }}/archive/refs/tags/{{ tag_name }}.tar.gz"
+    dest: "/tmp/{{ app_repo_name }}-{{ tag_name }}.tar.gz"
+  when: tag_name is defined
+  register: tag_download
+
+- name: Download from main branch if no tags
+  get_url:
+    url: "{{ app_repo_url }}/archive/refs/heads/main.tar.gz"
+    dest: "/tmp/{{ app_repo_name }}-main.tar.gz"
+  when: tag_name is not defined and main_branch_response.status == 200
+  register: main_download
+
+- name: Extract the archive from tag
+  unarchive:
+    src: "/tmp/{{ app_repo_name }}-{{ tag_name }}.tar.gz"
+    dest: "/tmp/"
+    remote_src: yes
+  when: tag_name is defined and tag_download is success
+
+- name: Extract the archive from main
+  unarchive:
+    src: "/tmp/{{ app_repo_name }}-main.tar.gz"
+    dest: "/tmp/"
+    remote_src: yes
+  when: tag_name is not defined and main_download is defined and main_download is success
+
+- name: Find extracted directory from tag
+  find:
+    paths: "/tmp"
+    patterns: "{{ app_repo_name }}-*"
+    file_type: "directory"
+  register: extracted_dirs
+  when: tag_name is defined and tag_download is success
+
+- name: Copy extracted files from tag to app directory
+  command: "cp -r {{ item.path }}/. {{ docker_host_config_root }}/app/"
+  with_items: "{{ extracted_dirs.files }}"
+  when: tag_name is defined and tag_download is success and extracted_dirs.matched > 0
+
+- name: Find extracted directory from main
+  find:
+    paths: "/tmp"
+    patterns: "{{ app_repo_name }}-main"
+    file_type: "directory"
+  register: extracted_main_dirs
+  when: tag_name is not defined and main_download is defined and main_download is success
+
+- name: Copy extracted files from main to app directory
+  command: "cp -r {{ item.path }}/. {{ docker_host_config_root }}/app/"
+  with_items: "{{ extracted_main_dirs.files }}"
+  when: tag_name is not defined and main_download is defined and main_download is success and extracted_main_dirs.matched > 0
+
+- name: Clean up temporary archive file from tag
+  file:
+    path: "/tmp/{{ app_repo_name }}-{{ tag_name }}.tar.gz"
+    state: absent
+  when: tag_name is defined and tag_download is success
+
+- name: Clean up extracted directories from tag
+  file:
+    path: "{{ item.path }}"
+    state: absent
+  with_items: "{{ extracted_dirs.files | default([]) }}"
+  when: tag_name is defined and tag_download is success and extracted_dirs.matched > 0
+
+- name: Clean up temporary archive file from main
+  file:
+    path: "/tmp/{{ app_repo_name }}-main.tar.gz"
+    state: absent
+  when: tag_name is not defined and main_download is defined and main_download is success
+
+- name: Clean up extracted directories from main
+  file:
+    path: "{{ item.path }}"
+    state: absent
+  with_items: "{{ extracted_main_dirs.files | default([]) }}"
+  when: tag_name is not defined and main_download is defined and main_download is success and extracted_main_dirs.matched > 0
+
+- name: Set permissions on app directory
+  file:
+    path: '{{ docker_host_config_root }}/app'
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+    recurse: yes
