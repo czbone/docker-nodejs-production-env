@@ -2,8 +2,8 @@
 # このファイルはサンプルです。実際に使用する場合はhostlistとしてコピーし、適切な値に変更してください。
 
 [example_vps]
-server1 ansible_host=192.168.1.100 ansible_ssh_user=ubuntu ansible_ssh_private_key_file=/vagrant/ssh_keys/server1.key  # サーバー1の説明
-#server2 ansible_host=192.168.1.101 ansible_ssh_user=ubuntu ansible_ssh_private_key_file=/vagrant/ssh_keys/server2.key  # サーバー2の説明
+server1 ansible_host=203.0.113.10 ansible_ssh_user=ubuntu ansible_ssh_private_key_file=/vagrant/ssh_keys/server1.key  # サーバー1の説明
+#server2 ansible_host=203.0.113.11 ansible_ssh_user=ubuntu ansible_ssh_private_key_file=/vagrant/ssh_keys/server2.key  # サーバー2の説明
 
 [example_vps:vars]
 # グループ内のすべてのサーバーに適用される変数

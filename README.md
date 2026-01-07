@@ -79,7 +79,7 @@ ansible_become_password=your_sudo_password
 
 ##### グループ変数（[グループ名:vars]セクション）
 
-- `default_domain_name`: サービスのドメイン名（**必須**）
+- `default_domain_name`: サービスのドメイン名またはサブドメイン名（**必須**）
 - `certbot_email`: Let's Encrypt証明書用の連絡先メールアドレス（**SSL有効時は必須**）
 - `certbot_enabled`: SSL証明書機能の有効化（`true` / `false`、デフォルト: `true`）
 - `certbot_test_cert`: テストモード（`1`=テスト証明書、`0`=本番証明書）
@@ -242,7 +242,7 @@ cd /vagrant
 
 ### hostlist（グループ変数）
 
-- `default_domain_name`: サービスのドメイン名（**必須**）
+- `default_domain_name`: サービスのドメイン名またはサブドメイン名（**必須**）
 - `certbot_enabled`: SSL証明書機能の有効化（`true` / `false`）
 - `certbot_test_cert`: テスト証明書モード（`1` / `0`）
 - `certbot_email`: Let's Encrypt連絡先メール（**SSL有効時は必須**）
@@ -425,7 +425,7 @@ docker exec nginx cat /etc/letsencrypt/live/example.com/cert.pem | openssl x509 
 - **Node.js v24** 対応
 - **package.json** が存在すること
 - **pnpm** コマンドでビルド・実行が可能
-  - ビルド: `pnpm install` → `pnpm run build`
+  - ビルド: `pnpm install` → `pnpm build`
   - 実行: `pnpm start`
 - **環境変数** でMariaDB、Redis接続情報を設定可能なこと
 - **ポート3000** でリッスンすること（または環境変数 `PORT` で変更可能）
