@@ -4,11 +4,13 @@
     - vars/main.yml
 
   vars:
-    default_domain_name: 'example.com'
-
+    # 
+    # 注意: hostlistの値を使う場合はコメントアウトすること
+    #
+    # default_domain_name: 'example.com'
     certbot_enabled: true  # Certbot機能の有効化/無効化
-    certbot_test_cert: 1  # Certbot実行モード(0=正式モード,1=テストモード)
-    certbot_email: 'admin@example.com'  # Let's Encrypt連絡受信用
+    # certbot_test_cert: 1  # Certbot実行モード(0=正式モード,1=テストモード)
+    # certbot_email: 'admin@example.com'  # Let's Encrypt連絡受信用
 
   roles:
     # Docker environment
