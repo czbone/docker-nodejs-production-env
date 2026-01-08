@@ -10,3 +10,4 @@ server1 ansible_host=203.0.113.10 ansible_ssh_user=ubuntu ansible_ssh_private_ke
 ansible_become_password=secure_password_here
 default_domain_name='example.com'
 certbot_email='admin@example.com'
+certbot_test_cert=1 # Certbot実行モード(0=正式モード,1=テストモード)

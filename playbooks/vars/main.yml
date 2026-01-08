@@ -36,7 +36,7 @@ main_db_password: sample_password
 # Application repository configuration
 #
 app_repo_owner: "czbone"
-#app_repo_name: "next16-mariadb-sample"
-app_repo_name: "astro-nodejs-mariadb-starter"
+app_repo_name: "next16-mariadb-sample"
+#app_repo_name: "astro-nodejs-mariadb-starter"
 app_repo_url: "https://github.com/{{ app_repo_owner }}/{{ app_repo_name }}"
 app_repo_api_url: "https://api.github.com/repos/{{ app_repo_owner }}/{{ app_repo_name }}"
