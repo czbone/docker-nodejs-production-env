@@ -192,27 +192,25 @@ cd /vagrant
 ├── provision.sh             # Ansible実行スクリプト
 ├── Vagrantfile              # Vagrant設定（踏み台環境）
 ├── ssh_keys/                # VPS接続用秘密鍵
-├── playbooks/
-│   ├── main.yml            # メインプレイブック
-│   ├── requirements.yml    # 外部ロール定義
-│   ├── vars/
-│   │   └── main.yml       # 設定変数
-│   ├── tasks/              # タスク定義
-│   │   ├── app.yml        # アプリデプロイタスク
-│   │   ├── nodejs.yml     # Node.jsコンテナ構築
-│   │   ├── nginx.yml      # Nginxコンテナ構築
-│   │   ├── mariadb.yml    # MariaDBコンテナ構築
-│   │   ├── redis.yml      # Redisコンテナ構築
-│   │   ├── certbot.yml    # SSL証明書取得・更新
-│   │   └── japanese.yml   # 日本語環境設定
-│   └── containers/         # Dockerfileテンプレート
-│       ├── nodejs/
-│       ├── nginx/
-│       ├── mariadb/
-│       ├── redis/
-│       └── certbot/
-└── sample/
-    └── README.md           # Vagrantローカルテスト環境の詳細説明
+└── playbooks/
+    ├── main.yml            # メインプレイブック
+    ├── requirements.yml    # 外部ロール定義
+    ├── vars/
+    │   └── main.yml       # 設定変数
+    ├── tasks/              # タスク定義
+    │   ├── app.yml        # アプリデプロイタスク
+    │   ├── nodejs.yml     # Node.jsコンテナ構築
+    │   ├── nginx.yml      # Nginxコンテナ構築
+    │   ├── mariadb.yml    # MariaDBコンテナ構築
+    │   ├── redis.yml      # Redisコンテナ構築
+    │   ├── certbot.yml    # SSL証明書取得・更新
+    │   └── japanese.yml   # 日本語環境設定
+    └── containers/         # Dockerfileテンプレート
+        ├── nodejs/
+        ├── nginx/
+        ├── mariadb/
+        ├── redis/
+        └── certbot/
 ```
 
 ## 設定変数リファレンス
