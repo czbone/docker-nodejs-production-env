@@ -73,7 +73,7 @@ ansible_become_password=your_sudo_password
 
 ##### サーバー定義（必須）
 
-- `ansible_host`: VPSのIPアドレスまたはホスト名
+- `ansible_host`: VPSのIPアドレス
 - `ansible_ssh_user`: SSH接続ユーザー名
 - `ansible_ssh_private_key_file`: 秘密鍵ファイルのパス（Vagrant環境内からの相対パス: `/vagrant/ssh_keys/xxx.key`）
 
