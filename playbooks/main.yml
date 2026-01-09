@@ -48,7 +48,7 @@
       import_tasks: ./tasks/certbot.yml
       when: certbot_enabled | default(true)
 
-    - name: Deploy Astro application(ufcal)
+    - name: Deploy Application
       import_tasks: ./tasks/app.yml
 
     - name: Create Docker container(nodejs)
