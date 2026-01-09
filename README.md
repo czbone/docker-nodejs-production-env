@@ -172,8 +172,8 @@ cd /vagrant
     ├── nginx/
     │   ├── access.log
     │   └── error.log
-    └── app/
-        └── app.log
+    └── letsencrypt/
+        └── letsencrypt.log
 ```
 
 ### デフォルトデータベース設定
@@ -363,7 +363,7 @@ docker exec nginx cat /etc/letsencrypt/live/example.com/cert.pem | openssl x509 
 
 4. データベース接続を確認
    ```bash
-   docker exec -it mariadb mysql -u sample_user -p -e "SHOW DATABASES;"
+   docker exec -it mariadb mariadb -u sample_user -p -e "SHOW DATABASES;"
    ```
 
 5. アプリケーションを手動で再起動
@@ -415,7 +415,7 @@ docker exec nginx cat /etc/letsencrypt/live/example.com/cert.pem | openssl x509 
 
 3. データベース接続テスト
    ```bash
-   docker exec -it mariadb mysql -u sample_user -p
+   docker exec -it mariadb mariadb -u sample_user -p
    ```
 
 4. `/docker/app/.env` ファイルの接続情報を確認
