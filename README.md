@@ -251,11 +251,11 @@ cd /vagrant
 
 ```bash
 # Nginxログ
-sudo tail -f /docker/log/nginx/access.log
-sudo tail -f /docker/log/nginx/error.log
+tail -f /docker/log/nginx/access.log
+tail -f /docker/log/nginx/error.log
 
 # アプリケーションログ
-sudo tail -f /docker/log/app/app.log
+tail -f /docker/log/app/app.log
 
 # Dockerコンテナログ
 docker logs -f nodejs
@@ -330,7 +330,7 @@ docker exec nginx cat /etc/letsencrypt/live/example.com/cert.pem | openssl x509 
 
 2. ポート80/443が開放されているか確認
    ```bash
-   sudo netstat -tuln | grep -E ':80|:443'
+   ss -tuln | grep -E ':80|:443'
    ```
 
 3. テストモードで実行してみる（`hostlist`で`certbot_test_cert=1`に設定）
